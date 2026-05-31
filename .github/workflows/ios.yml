@@ -25,7 +25,7 @@ jobs:
         run: dotnet workload install maui-ios
 
       - name: Restore dependencies
-        run: dotnet restore ${{ env.PROJECT_PATH }}
+        run: dotnet restore ${{ env.PROJECT_PATH }} -p:TargetFramework=net10.0-ios
 
       - name: Build iOS (Release)
         run: |
