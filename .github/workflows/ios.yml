@@ -34,16 +34,15 @@ jobs:
 
       - name: Build iOS (Simulator Release)
         run: |
-          dotnet publish ${{ env.PROJECT_PATH }} \
+          dotnet build ${{ env.PROJECT_PATH }} \
             -f net9.0-ios \
             -c Release \
             --no-restore \
-            -p:RuntimeIdentifier=iossimulator-x64 \
-            -o ./publish/ios
+            -p:RuntimeIdentifier=iossimulator-x64
 
       - name: Upload simulator app bundle
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-release
-          path: publish/ios/**/*.app
+          path: bin/Release/net9.0-ios/iossimulator-x64/**/*.app
           if-no-files-found: warn
