@@ -30,24 +30,20 @@ jobs:
             --from-rollback-file .github/workload-rollback-ios18.json
 
       - name: Restore dependencies
-        run: dotnet restore ${{ env.PROJECT_PATH }} -p:TargetFramework=net9.0-ios -p:RuntimeIdentifier=ios-arm64
+        run: dotnet restore ${{ env.PROJECT_PATH }} -p:TargetFramework=net9.0-ios -p:RuntimeIdentifier=iossimulator-x64
 
-      - name: Build iOS (Release)
+      - name: Build iOS (Simulator Release)
         run: |
           dotnet publish ${{ env.PROJECT_PATH }} \
             -f net9.0-ios \
             -c Release \
             --no-restore \
-            -p:RuntimeIdentifier=ios-arm64 \
-            -p:ArchiveOnBuild=true \
+            -p:RuntimeIdentifier=iossimulator-x64 \
             -o ./publish/ios
 
-      - name: Upload IPA and dSYM files
+      - name: Upload simulator app bundle
         uses: actions/upload-artifact@v4
         with:
-          name: ios-release
-          path: |
-            publish/ios/**/*.ipa
-            publish/ios/**/*.dSYM
-            publish/ios/**/*.dSYM/**
+          name: ios-simulator-release
+          path: publish/ios/**/*.app
           if-no-files-found: warn
