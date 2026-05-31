@@ -6,11 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  # Pin to 9.0.100 (Nov 2024) whose bundled workload manifest references
-  # the iOS 18 SDK (Xcode 16 compatible). Using --skip-manifest-update
-  # prevents the installer from fetching the newer manifest that requires
-  # Xcode 26.5, which is not yet available on GitHub-hosted runners.
-  DOTNET_VERSION: '9.0.100'
+  DOTNET_VERSION: '9.0.x'
   PROJECT_PATH: cleaneveryday-mobile.csproj
 
 jobs:
@@ -25,8 +21,10 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Install MAUI workload (pinned to SDK manifest)
-        run: dotnet workload install maui-ios --skip-manifest-update
+      - name: Install MAUI workload (pinned to iOS 18 SDK)
+        run: |
+          dotnet workload install maui-ios \
+            --from-rollback-file .github/workload-rollback-ios18.json
 
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }} -p:TargetFramework=net9.0-ios -p:RuntimeIdentifier=ios-arm64
