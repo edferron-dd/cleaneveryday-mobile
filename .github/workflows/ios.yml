@@ -6,7 +6,12 @@ on:
   workflow_dispatch:
 
 env:
-  DOTNET_VERSION: '10.0.x'
+  # Pin to 10.0.100 feature band so the rollback file's manifest versions
+  # (which target 10.0.100) are applied to the active SDK feature band.
+  # The rollback pins ios SDK to 26.2.10233 (iOS 26.2, requires Xcode 26.3).
+  # Update to 10.0.x and remove the rollback file once GitHub runners
+  # include Xcode 26.5 and the latest maui-ios workload is used instead.
+  DOTNET_VERSION: '10.0.100'
   PROJECT_PATH: cleaneveryday-mobile.csproj
 
 jobs:
@@ -16,18 +21,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode 26.5
+      - name: Select Xcode 26.3
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '26.5'
+          xcode-version: '26.3'
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Install MAUI workload
-        run: dotnet workload install maui-ios
+      - name: Pin SDK to 10.0.100 feature band
+        run: echo '{"sdk":{"version":"10.0.100","rollForward":"latestPatch"}}' > global.json
+
+      - name: Install MAUI workload (pinned to iOS 26.2 SDK)
+        run: |
+          dotnet workload install maui-ios \
+            --from-rollback-file .github/workload-rollback-ios26.3.json
 
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }} -p:TargetFramework=net10.0-ios -p:RuntimeIdentifier=iossimulator-x64
