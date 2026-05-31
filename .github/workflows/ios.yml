@@ -21,6 +21,9 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Pin SDK to .NET 9 for this runner
+        run: echo '{"sdk":{"version":"9.0.0","rollForward":"latestMinor"}}' > global.json
+
       - name: Install MAUI workload (pinned to iOS 18 SDK)
         run: |
           dotnet workload install maui-ios \
