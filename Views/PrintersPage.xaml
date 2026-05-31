@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CleanEverydayMobile.Views.PrintersPage"
+             Title="Select Printer">
+
+    <Grid RowDefinitions="*,Auto" Padding="16" RowSpacing="12">
+
+        <VerticalStackLayout Grid.Row="0" Spacing="12">
+            <ActivityIndicator x:Name="LoadingIndicator"
+                               IsRunning="True"
+                               IsVisible="True"
+                               Color="#512BD4"
+                               HorizontalOptions="Center" />
+
+            <Label x:Name="ErrorLabel"
+                   TextColor="Red"
+                   IsVisible="False"
+                   HorizontalOptions="Center" />
+
+            <CollectionView x:Name="PrintersList"
+                            SelectionMode="Single"
+                            SelectionChanged="OnPrinterSelected">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="12" ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0"
+                                   Text="{Binding Name}"
+                                   FontSize="18"
+                                   VerticalOptions="Center" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding Status}"
+                                   TextColor="#512BD4"
+                                   FontSize="14"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="12">
+            <Button Grid.Column="0"
+                    Text="Cancel"
+                    Clicked="OnCancelClicked"
+                    BackgroundColor="Transparent"
+                    TextColor="#512BD4"
+                    BorderColor="#512BD4"
+                    BorderWidth="2"
+                    CornerRadius="8" />
+            <Button Grid.Column="1"
+                    x:Name="OkButton"
+                    Text="OK"
+                    Clicked="OnOkClicked"
+                    BackgroundColor="#512BD4"
+                    TextColor="White"
+                    CornerRadius="8"
+                    IsEnabled="False" />
+        </Grid>
+
+    </Grid>
+</ContentPage>

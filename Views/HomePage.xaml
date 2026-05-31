@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CleanEverydayMobile.Views.HomePage"
+             Title="Home">
+
+    <VerticalStackLayout Spacing="0">
+
+        <!-- Banner -->
+        <Frame BackgroundColor="#512BD4"
+               Padding="16"
+               CornerRadius="0"
+               HasShadow="False"
+               Margin="0">
+            <VerticalStackLayout>
+                <Label x:Name="FullnameBanner"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       HorizontalOptions="Center" />
+                <Label x:Name="LocationBanner"
+                       FontSize="14"
+                       TextColor="#E0D9FF"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </Frame>
+
+        <!-- Navigation Options -->
+        <VerticalStackLayout Padding="20" Spacing="16">
+
+            <Button Text="Checklist"
+                    Clicked="OnChecklistClicked"
+                    BackgroundColor="#512BD4"
+                    TextColor="White"
+                    CornerRadius="8"
+                    FontSize="18"
+                    HeightRequest="56" />
+
+            <Button Text="Printers"
+                    Clicked="OnPrintersClicked"
+                    BackgroundColor="#512BD4"
+                    TextColor="White"
+                    CornerRadius="8"
+                    FontSize="18"
+                    HeightRequest="56" />
+
+            <Button Text="Logout"
+                    Clicked="OnLogoutClicked"
+                    BackgroundColor="Transparent"
+                    TextColor="#512BD4"
+                    BorderColor="#512BD4"
+                    BorderWidth="2"
+                    CornerRadius="8"
+                    FontSize="18"
+                    HeightRequest="56"
+                    Margin="0,20,0,0" />
+
+        </VerticalStackLayout>
+    </VerticalStackLayout>
+</ContentPage>

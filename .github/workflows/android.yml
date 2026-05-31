@@ -1,0 +1,52 @@
+name: Android Build and Publish
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  PROJECT_PATH: cleaneveryday-mobile.csproj
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'microsoft'
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui-android
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Build Android (Release)
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} \
+            -f net10.0-android \
+            -c Release \
+            --no-restore \
+            -o ./publish/android
+
+      - name: Upload APK and mapping files
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release
+          path: |
+            publish/android/**/*.apk
+            publish/android/**/*.aab
+            publish/android/**/mapping.txt
+          if-no-files-found: warn

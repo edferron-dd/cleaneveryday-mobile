@@ -1,0 +1,48 @@
+name: iOS Build and Publish
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  PROJECT_PATH: cleaneveryday-mobile.csproj
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui-ios
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Build iOS (Release)
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} \
+            -f net10.0-ios \
+            -c Release \
+            --no-restore \
+            -p:RuntimeIdentifier=ios-arm64 \
+            -p:ArchiveOnBuild=true \
+            -o ./publish/ios
+
+      - name: Upload IPA and dSYM files
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release
+          path: |
+            publish/ios/**/*.ipa
+            publish/ios/**/*.dSYM
+            publish/ios/**/*.dSYM/**
+          if-no-files-found: warn

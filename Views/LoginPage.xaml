@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CleanEverydayMobile.Views.LoginPage"
+             Title="Clean Everyday"
+             Shell.NavBarIsVisible="False">
+
+    <VerticalStackLayout Padding="40" Spacing="20" VerticalOptions="Center">
+
+        <Label Text="Clean Everyday"
+               FontSize="32"
+               FontAttributes="Bold"
+               HorizontalOptions="Center"
+               TextColor="#512BD4" />
+
+        <Label Text="Sign in to continue"
+               FontSize="16"
+               HorizontalOptions="Center"
+               TextColor="Gray" />
+
+        <Entry x:Name="UsernameEntry"
+               Placeholder="Username (e.g. johndoe@datadogdemo.com)"
+               Keyboard="Email"
+               AutomationId="UsernameEntry" />
+
+        <Entry x:Name="PasswordEntry"
+               Placeholder="Password"
+               IsPassword="True"
+               AutomationId="PasswordEntry" />
+
+        <Label x:Name="ErrorLabel"
+               TextColor="Red"
+               IsVisible="False"
+               HorizontalOptions="Center" />
+
+        <Button x:Name="LoginButton"
+                Text="Login"
+                Clicked="OnLoginClicked"
+                BackgroundColor="#512BD4"
+                TextColor="White"
+                CornerRadius="8" />
+
+        <ActivityIndicator x:Name="LoadingIndicator"
+                           IsRunning="False"
+                           IsVisible="False"
+                           Color="#512BD4"
+                           HorizontalOptions="Center" />
+
+    </VerticalStackLayout>
+</ContentPage>
