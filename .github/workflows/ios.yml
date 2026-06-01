@@ -21,6 +21,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Pin SDK to 10.0.100 feature band
+        run: echo '{"sdk":{"version":"10.0.100","rollForward":"latestPatch"}}' > global.json
+
       - name: Configure Datadog Test Optimization
         uses: datadog/test-visibility-github-action@v2
         with:
@@ -32,14 +40,6 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: "26.3"
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Pin SDK to 10.0.100 feature band
-        run: echo '{"sdk":{"version":"10.0.100","rollForward":"latestPatch"}}' > global.json
 
       - name: Install MAUI workload (pinned to iOS 26.2 SDK)
         run: |
