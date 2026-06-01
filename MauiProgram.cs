@@ -41,6 +41,14 @@ public static class MauiProgram
                 TrackFrustrations = true,
                 TrackBackgroundEvents = true,
                 TrackMemoryWarnings = true,
+                FirstPartyHosts =
+                [
+                    new FirstPartyHost
+                    {
+                        Match = "dd-cleaneveryday-api.azurewebsites.net",
+                        HeaderTypes = [TracingHeaderType.Datadog]
+                    }
+                ]
             })
             .UseDatadogSessionReplay(new SessionReplayConfiguration
             {
