@@ -63,7 +63,9 @@ public static class MauiProgram
 
         builder.Logging.AddDebug();
 
-        builder.Services.AddHttpClient<ApiService>();
+        builder.Services.AddTransient<ApiLoggingHandler>();
+        builder.Services.AddHttpClient<ApiService>()
+            .AddHttpMessageHandler<ApiLoggingHandler>();
         builder.Services.AddSingleton<SessionService>();
 
         builder.Services.AddTransient<AppShell>();
