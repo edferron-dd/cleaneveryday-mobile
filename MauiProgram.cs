@@ -1,5 +1,8 @@
 using CleanEverydayMobile.Services;
 using CleanEverydayMobile.Views;
+using DatadogSdk.Maui;
+using DatadogSdk.Maui.Configuration;
+using DatadogSdk.Maui.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace CleanEverydayMobile;
@@ -15,12 +18,41 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            })
+            .UseDatadogSdk(new DdSdkConfiguration
+            {
+
+                ClientToken = DeviceInfo.Current.Platform == DevicePlatform.Android ? "pubced8336aefca9f20f1042281751cf327" : "pubdc8921c28adb3cafd21e366141a0b501",
+                Service = DeviceInfo.Current.Platform == DevicePlatform.Android ? "cleaneveryday-android" : "cleaneveryday-ios",
+                Environment = "demo",
+                Site = DatadogSite.Us3,
+                TrackingConsent = TrackingConsent.Granted,
+                NativeCrashReportEnabled = true,
+            })
+            .UseDatadogLogs(new DdLogsConfiguration { })
+            .UseDatadogRum(new DdRumConfiguration
+            {
+                ApplicationId = DeviceInfo.Current.Platform == DevicePlatform.Android ? "f3bedbc4-4281-4aa2-b5f7-381d30575a34" : "e4043840-b4b8-455d-adb2-8b9fc8a7f157",
+                SessionSampleRate = 100.0,
+                ResourceTraceSampleRate = 100.0,
+                TrackFrustrations = true,
+                TrackBackgroundEvents = true,
+                TrackMemoryWarnings = true,
+            })
+            .UseDatadogSessionReplay(new SessionReplayConfiguration
+            {
+                ReplaySampleRate = 100.0,
+                TextAndInputPrivacyLevel = TextAndInputPrivacy.MaskSensitiveInputs,
+                ImagePrivacyLevel = ImagePrivacy.MaskNone,
+                TouchPrivacyLevel = TouchPrivacy.Show,
             });
 
         builder.Logging.AddDebug();
 
         builder.Services.AddHttpClient<ApiService>();
         builder.Services.AddSingleton<SessionService>();
+
+        builder.Services.AddTransient<AppShell>();
 
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<LocationSelectionPage>();
