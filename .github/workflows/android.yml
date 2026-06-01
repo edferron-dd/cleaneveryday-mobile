@@ -2,11 +2,11 @@ name: Android Build and Publish
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 env:
-  DOTNET_VERSION: '10.0.x'
+  DOTNET_VERSION: "10.0.x"
   PROJECT_PATH: cleaneveryday-mobile.csproj
 
 jobs:
@@ -24,8 +24,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'microsoft'
+          java-version: "17"
+          distribution: "microsoft"
 
       - name: Install MAUI workload
         run: dotnet workload install maui-android
@@ -57,6 +57,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure Datadog Test Optimization
+        uses: datadog/test-visibility-github-action@v2
+        with:
+          languages: dotnet
+          api_key: ${{secrets.DD_API_KEY}}
+          site: datadoghq.com
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

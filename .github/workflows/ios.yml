@@ -2,7 +2,7 @@ name: iOS Build and Publish
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 env:
@@ -11,7 +11,7 @@ env:
   # The rollback pins ios SDK to 26.2.10233 (iOS 26.2, requires Xcode 26.3).
   # Update to 10.0.x and remove the rollback file once GitHub runners
   # include Xcode 26.5 and the latest maui-ios workload is used instead.
-  DOTNET_VERSION: '10.0.100'
+  DOTNET_VERSION: "10.0.100"
   PROJECT_PATH: cleaneveryday-mobile.csproj
 
 jobs:
@@ -21,10 +21,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Configure Datadog Test Optimization
+        uses: datadog/test-visibility-github-action@v2
+        with:
+          languages: dotnet
+          api_key: ${{secrets.DD_API_KEY}}
+          site: datadoghq.com
+
       - name: Select Xcode 26.3
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '26.3'
+          xcode-version: "26.3"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
