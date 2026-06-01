@@ -25,7 +25,7 @@ public static class MauiProgram
                 ClientToken = DeviceInfo.Current.Platform == DevicePlatform.Android ? "pubced8336aefca9f20f1042281751cf327" : "pubdc8921c28adb3cafd21e366141a0b501",
                 Service = DeviceInfo.Current.Platform == DevicePlatform.Android ? "cleaneveryday-android" : "cleaneveryday-ios",
                 Environment = "demo",
-                Site = DatadogSite.Us3,
+                Site = DatadogSite.Us1,
                 TrackingConsent = TrackingConsent.Granted,
                 NativeCrashReportEnabled = true,
             })
