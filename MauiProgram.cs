@@ -22,8 +22,10 @@ public static class MauiProgram
             .UseDatadogSdk(new DdSdkConfiguration
             {
 
-                ClientToken = DeviceInfo.Current.Platform == DevicePlatform.Android ? "pubced8336aefca9f20f1042281751cf327" : "pubdc8921c28adb3cafd21e366141a0b501",
-                Service = DeviceInfo.Current.Platform == DevicePlatform.Android ? "cleaneveryday-android" : "cleaneveryday-ios",
+                // ClientToken = DeviceInfo.Current.Platform == DevicePlatform.Android ? "pubced8336aefca9f20f1042281751cf327" : "pubdc8921c28adb3cafd21e366141a0b501",
+                // Service = DeviceInfo.Current.Platform == DevicePlatform.Android ? "cleaneveryday-android" : "cleaneveryday-ios",
+                ClientToken = "pub47b5608dcd99227e3b921bb39eab7af4",
+                Service = "cleaneveryday-maui",
                 Environment = "demo",
                 Site = DatadogSite.Us1,
                 TrackingConsent = TrackingConsent.Granted,
@@ -32,7 +34,8 @@ public static class MauiProgram
             .UseDatadogLogs(new DdLogsConfiguration { })
             .UseDatadogRum(new DdRumConfiguration
             {
-                ApplicationId = DeviceInfo.Current.Platform == DevicePlatform.Android ? "f3bedbc4-4281-4aa2-b5f7-381d30575a34" : "e4043840-b4b8-455d-adb2-8b9fc8a7f157",
+                // ApplicationId = DeviceInfo.Current.Platform == DevicePlatform.Android ? "f3bedbc4-4281-4aa2-b5f7-381d30575a34" : "e4043840-b4b8-455d-adb2-8b9fc8a7f157",
+                ApplicationId = "08378444-1c4e-4555-988e-57143bd49100",
                 SessionSampleRate = 100.0,
                 ResourceTraceSampleRate = 100.0,
                 TrackFrustrations = true,
