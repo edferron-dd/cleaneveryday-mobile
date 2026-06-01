@@ -30,6 +30,14 @@ public static class MauiProgram
                 Site = DatadogSite.Us1,
                 TrackingConsent = TrackingConsent.Granted,
                 NativeCrashReportEnabled = true,
+                FirstPartyHosts =
+                [
+                    new FirstPartyHost
+                    {
+                        Match = "dd-cleaneveryday-api.azurewebsites.net",
+                        HeaderTypes = [TracingHeaderType.Datadog]
+                    }
+                ]
             })
             .UseDatadogLogs(new DdLogsConfiguration { })
             .UseDatadogRum(new DdRumConfiguration
@@ -40,15 +48,7 @@ public static class MauiProgram
                 ResourceTraceSampleRate = 100.0,
                 TrackFrustrations = true,
                 TrackBackgroundEvents = true,
-                TrackMemoryWarnings = true,
-                FirstPartyHosts =
-                [
-                    new FirstPartyHost
-                    {
-                        Match = "dd-cleaneveryday-api.azurewebsites.net",
-                        HeaderTypes = [TracingHeaderType.Datadog]
-                    }
-                ]
+                TrackMemoryWarnings = true
             })
             .UseDatadogSessionReplay(new SessionReplayConfiguration
             {
