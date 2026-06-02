@@ -11,6 +11,8 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+        const string apiHost = "dd-cleaneveryday-api.azurewebsites.net";
+
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
@@ -34,7 +36,7 @@ public static class MauiProgram
                 [
                     new ()
                     {
-                        Match = "dd-cleaneveryday-api.azurewebsites.net", HeaderTypes = new List<TracingHeaderType>
+                        Match = apiHost, HeaderTypes = new List<TracingHeaderType>
                         {
                             TracingHeaderType.Datadog, TracingHeaderType.TraceContext
                         }
@@ -63,7 +65,10 @@ public static class MauiProgram
 
         builder.Logging.AddDebug();
 
-        builder.Services.AddHttpClient<ApiService>();
+        builder.Services.AddTransient(_ => new DatadogTracingHandler([apiHost]));
+        builder.Services
+            .AddHttpClient<ApiService>()
+            .AddHttpMessageHandler<DatadogTracingHandler>();
         builder.Services.AddSingleton<SessionService>();
 
         builder.Services.AddTransient<AppShell>();
