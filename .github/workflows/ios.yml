@@ -76,7 +76,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload dSYMs to Datadog
-        uses: DataDog/upload-dsyms-github-action@v4
+        uses: DataDog/upload-dsyms-github-action@v0.4.0
         with:
           api_key: ${{ secrets.DD_API_KEY }}
           site: datadoghq.com
