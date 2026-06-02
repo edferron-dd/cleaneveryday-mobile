@@ -15,11 +15,17 @@ build-ios:
 	DEVELOPER_DIR=$(XCODE) dotnet build cleaneveryday-mobile.csproj \
 		-f net10.0-ios \
 		-c Debug \
-		-p:RuntimeIdentifier=iossimulator-arm64
+		-p:RuntimeIdentifier=iossimulator-arm64 \
+		-p:MtouchDebugSymbols=true \
+		-p:DebugType=full \
+		-p:MtouchDebug-false \
+		-p:DebugInformationFormat=dwarf-with-dsym \
+		-p:MtouchExtraArgs="--dsym=true"
+
 
 build-android:
-	dotnet build cleaneveryday-mobile.csproj -t:Run \
+	dotnet build cleaneveryday-mobile.csproj \
 		-f net10.0-android \
-		-c Debug \
+		-c Release \
 		-p:CodesignKey="" \
 		-p:CodesignProvision=""

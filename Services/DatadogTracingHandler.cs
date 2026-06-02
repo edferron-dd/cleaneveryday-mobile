@@ -34,10 +34,10 @@ public sealed class DatadogTracingHandler : DelegatingHandler
     private const string RumSpanIdAttribute = "_dd.span_id";
     private const string RumRulePsrAttribute = "_dd.rule_psr";
     private const string RumTraceIdHighBitsAttribute = "_dd.p.tid";
-    private const int SamplingPriority = 1;
+    private const int DefaultSamplingPriority = 1;
     private const string ResourceKindXhr = "Xhr";
 
-    private static readonly Lazy<RumMethods?> RumMethods = new(CreateRumMethods);
+    private static readonly Lazy<RumMethods?> RumMethodsCache = new(CreateRumMethods);
     private static readonly Dictionary<string, string> HttpMethodToRumMethodName = new(StringComparer.OrdinalIgnoreCase)
     {
         { HttpMethod.Get.Method, "Get" },
@@ -256,7 +256,7 @@ public sealed class DatadogTracingHandler : DelegatingHandler
             Dictionary<string, object> traceAttributes,
             long timestampMs)
         {
-            var rumMethods = RumMethods.Value;
+            var rumMethods = RumMethodsCache.Value;
             if (rumMethods is null || request.RequestUri is null)
             {
                 return;
@@ -287,7 +287,7 @@ public sealed class DatadogTracingHandler : DelegatingHandler
             Dictionary<string, object> traceAttributes,
             long timestampMs)
         {
-            var rumMethods = RumMethods.Value;
+            var rumMethods = RumMethodsCache.Value;
             if (rumMethods is null)
             {
                 return;
@@ -360,7 +360,7 @@ public sealed class DatadogTracingHandler : DelegatingHandler
                     continue;
                 }
 
-                return Build(traceIdHex, spanIdHex, datadogTraceId, datadogSpanId, SamplingPriority);
+                return Build(traceIdHex, spanIdHex, datadogTraceId, datadogSpanId, DefaultSamplingPriority);
             }
         }
 
