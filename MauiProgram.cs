@@ -53,7 +53,18 @@ public static class MauiProgram
                 ResourceTraceSampleRate = 100.0,
                 TrackFrustrations = true,
                 TrackBackgroundEvents = true,
-                TrackMemoryWarnings = true
+                TrackMemoryWarnings = true,
+                ResourceEventMapper = resource =>
+                {
+                    if (!Uri.TryCreate(resource.Url, UriKind.Absolute, out var resourceUri))
+                    {
+                        return resource;
+                    }
+
+                    return string.Equals(resourceUri.Host, apiHost, StringComparison.OrdinalIgnoreCase)
+                        ? null
+                        : resource;
+                }
             })
             .UseDatadogSessionReplay(new SessionReplayConfiguration
             {

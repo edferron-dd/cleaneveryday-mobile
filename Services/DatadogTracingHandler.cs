@@ -1,9 +1,24 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
-using System.Security.Cryptography;
 
 namespace CleanEverydayMobile.Services;
+
+internal interface IRumResourceTracker
+{
+    void StartResource(
+        string resourceKey,
+        HttpRequestMessage request,
+        Dictionary<string, object> traceAttributes,
+        long timestampMs);
+
+    void StopResource(
+        string resourceKey,
+        HttpResponseMessage? response,
+        Exception? exception,
+        Dictionary<string, object> traceAttributes,
+        long timestampMs);
+}
 
 public sealed class DatadogTracingHandler : DelegatingHandler
 {
@@ -15,18 +30,42 @@ public sealed class DatadogTracingHandler : DelegatingHandler
     private const string TraceParentHeader = "traceparent";
     private const string TraceStateHeader = "tracestate";
     private const string DatadogOriginValue = "rum";
-    private const string OperationName = "http.client.request";
+    private const string RumTraceIdAttribute = "_dd.trace_id";
+    private const string RumSpanIdAttribute = "_dd.span_id";
+    private const string RumRulePsrAttribute = "_dd.rule_psr";
+    private const string RumTraceIdHighBitsAttribute = "_dd.p.tid";
+    private const int SamplingPriority = 1;
+    private const string ResourceKindXhr = "Xhr";
 
-    private static readonly Lazy<DatadogTraceMethods?> TraceMethods = new(CreateTraceMethods);
+    private static readonly Lazy<RumMethods?> RumMethods = new(CreateRumMethods);
+    private static readonly Dictionary<string, string> HttpMethodToRumMethodName = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { HttpMethod.Get.Method, "Get" },
+        { HttpMethod.Post.Method, "Post" },
+        { HttpMethod.Put.Method, "Put" },
+        { HttpMethod.Delete.Method, "Delete" },
+        { HttpMethod.Head.Method, "Head" },
+        { HttpMethod.Patch.Method, "Patch" },
+        { HttpMethod.Options.Method, "Options" },
+        { HttpMethod.Trace.Method, "Trace" },
+        { HttpMethod.Connect.Method, "Connect" }
+    };
 
     private readonly HashSet<string> _firstPartyHosts;
+    private readonly IRumResourceTracker _rumResourceTracker;
 
     public DatadogTracingHandler(IEnumerable<string> firstPartyHosts)
+        : this(firstPartyHosts, ReflectionRumResourceTracker.Instance)
+    {
+    }
+
+    internal DatadogTracingHandler(IEnumerable<string> firstPartyHosts, IRumResourceTracker rumResourceTracker)
     {
         _firstPartyHosts = firstPartyHosts
                            .Where(host => !string.IsNullOrWhiteSpace(host))
                            .Select(NormalizeHost)
                            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        _rumResourceTracker = rumResourceTracker;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -36,34 +75,20 @@ public sealed class DatadogTracingHandler : DelegatingHandler
             return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
 
-        TraceHeaderContext? traceContext = null;
-        try
-        {
-            traceContext = TraceHeaderContext.Create();
-            InjectTraceHeaders(request, traceContext);
-        }
-        catch
-        {
-            traceContext = null;
-        }
-
-        var datadogSpanId = TryStartDatadogSpan(request);
+        var traceContext = TraceHeaderContext.Create();
+        InjectTraceHeaders(request, traceContext);
+        var rumResourceContext = TryStartRumResource(request, traceContext);
 
         try
         {
             var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            TryFinishDatadogSpan(datadogSpanId, response, null);
+            TryStopRumResource(rumResourceContext, response, null);
             return response;
         }
         catch (Exception ex)
         {
-            TryFinishDatadogSpan(datadogSpanId, null, ex);
+            TryStopRumResource(rumResourceContext, null, ex);
             throw;
-        }
-        finally
-        {
-            traceContext.Activity?.Stop();
-            traceContext.Activity?.Dispose();
         }
     }
 
@@ -107,33 +132,20 @@ public sealed class DatadogTracingHandler : DelegatingHandler
         request.Headers.TryAddWithoutValidation(headerName, value);
     }
 
-    private static string? TryStartDatadogSpan(HttpRequestMessage request)
+    private RumResourceContext? TryStartRumResource(HttpRequestMessage request, TraceHeaderContext traceContext)
     {
-        var traceMethods = TraceMethods.Value;
-        if (traceMethods is null)
-        {
-            return null;
-        }
+        var resourceContext = new RumResourceContext(
+            ResourceKey: traceContext.DatadogSpanId.ToString(CultureInfo.InvariantCulture),
+            TraceAttributes: traceContext.CreateRumTraceAttributes());
 
         try
         {
-            var context = new Dictionary<string, object>
-            {
-                ["span.kind"] = "client",
-                                ["http.method"] = request.Method.Method,
-                                                  ["http.url"] = request.RequestUri?.ToString() ?? string.Empty
-            };
-
-            var spanId = traceMethods.StartSpan.Invoke(
-                             null,
-                             new object?[]
-            {
-                OperationName,
-                context,
-                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-            });
-
-            return spanId as string ?? spanId?.ToString();
+            _rumResourceTracker.StartResource(
+                resourceContext.ResourceKey,
+                request,
+                resourceContext.TraceAttributes,
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            return resourceContext;
         }
         catch
         {
@@ -141,22 +153,147 @@ public sealed class DatadogTracingHandler : DelegatingHandler
         }
     }
 
-    private static void TryFinishDatadogSpan(string? spanId, HttpResponseMessage? response, Exception? exception)
+    private void TryStopRumResource(RumResourceContext? resourceContext, HttpResponseMessage? response, Exception? exception)
     {
-        if (string.IsNullOrWhiteSpace(spanId))
-        {
-            return;
-        }
-
-        var traceMethods = TraceMethods.Value;
-        if (traceMethods is null)
+        if (resourceContext is null)
         {
             return;
         }
 
         try
         {
-            var context = new Dictionary<string, object>();
+            _rumResourceTracker.StopResource(
+                resourceContext.ResourceKey,
+                response,
+                exception,
+                resourceContext.TraceAttributes,
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        }
+        catch
+        {
+        }
+    }
+
+    private static RumMethods? CreateRumMethods()
+    {
+        var ddRumType = Type.GetType("DatadogSdk.Maui.DdRum, DatadogSdk.Maui");
+        if (ddRumType is null)
+        {
+            return null;
+        }
+
+        const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Static;
+        var startResource = ddRumType.GetMethods(bindingFlags)
+                            .FirstOrDefault(method =>
+                                            method.Name == "StartResource"
+                                            && method.GetParameters().Length == 5);
+        var stopResource = ddRumType.GetMethods(bindingFlags)
+                           .FirstOrDefault(method =>
+                                           method.Name == "StopResource"
+                                           && method.GetParameters().Length == 6);
+        if (startResource is null || stopResource is null)
+        {
+            return null;
+        }
+
+        var startParameters = startResource.GetParameters();
+        var stopParameters = stopResource.GetParameters();
+        var resourceMethodType = startParameters[1].ParameterType;
+        var resourceKindType = stopParameters[2].ParameterType;
+        if (!resourceMethodType.IsEnum || !resourceKindType.IsEnum)
+        {
+            return null;
+        }
+
+        var resourceKind = ParseEnumValue(resourceKindType, ResourceKindXhr);
+        if (resourceKind is null)
+        {
+            return null;
+        }
+
+        var resourceMethods = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (httpMethod, rumMethodName) in HttpMethodToRumMethodName)
+        {
+            var resourceMethod = ParseEnumValue(resourceMethodType, rumMethodName);
+            if (resourceMethod is not null)
+            {
+                resourceMethods[httpMethod] = resourceMethod;
+            }
+        }
+
+        return resourceMethods.Count == 0
+               ? null
+               : new RumMethods(startResource, stopResource, resourceKind, resourceMethods);
+    }
+
+    private static ulong ParseHexAsUInt64(string value) =>
+    ulong.TryParse(value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var parsed)
+    ? parsed
+    : 0;
+
+    private static object? ParseEnumValue(Type enumType, string value)
+    {
+        try
+        {
+            return Enum.Parse(enumType, value, ignoreCase: true);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private sealed class ReflectionRumResourceTracker : IRumResourceTracker
+    {
+        public static ReflectionRumResourceTracker Instance
+        {
+            get;
+        } = new();
+
+        public void StartResource(
+            string resourceKey,
+            HttpRequestMessage request,
+            Dictionary<string, object> traceAttributes,
+            long timestampMs)
+        {
+            var rumMethods = RumMethods.Value;
+            if (rumMethods is null || request.RequestUri is null)
+            {
+                return;
+            }
+
+            var resourceMethod = rumMethods.ResolveResourceMethod(request.Method.Method);
+            if (resourceMethod is null)
+            {
+                return;
+            }
+
+            rumMethods.StartResource.Invoke(
+                null,
+                new object?[]
+            {
+                resourceKey,
+                resourceMethod,
+                request.RequestUri.ToString(),
+                new Dictionary<string, object>(traceAttributes),
+                timestampMs
+            });
+        }
+
+        public void StopResource(
+            string resourceKey,
+            HttpResponseMessage? response,
+            Exception? exception,
+            Dictionary<string, object> traceAttributes,
+            long timestampMs)
+        {
+            var rumMethods = RumMethods.Value;
+            if (rumMethods is null)
+            {
+                return;
+            }
+
+            var context = new Dictionary<string, object>(traceAttributes);
             if (response is not null)
             {
                 context["http.status_code"] = (int)response.StatusCode;
@@ -168,67 +305,38 @@ public sealed class DatadogTracingHandler : DelegatingHandler
                 context["error.type"] = exception.GetType().FullName ?? exception.GetType().Name;
             }
 
-            traceMethods.FinishSpan.Invoke(
+            var statusCode = response is null ? 0 : (int)response.StatusCode;
+            var responseSize = response?.Content?.Headers.ContentLength ?? -1L;
+
+            rumMethods.StopResource.Invoke(
                 null,
                 new object?[]
             {
-                spanId,
+                resourceKey,
+                statusCode,
+                rumMethods.ResourceKind,
+                responseSize,
                 context,
-                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                timestampMs
             });
         }
-        catch
-        {
-        }
     }
 
-    private static DatadogTraceMethods? CreateTraceMethods()
+    private sealed record RumMethods(
+        MethodInfo StartResource,
+        MethodInfo StopResource,
+        object ResourceKind,
+        IReadOnlyDictionary<string, object> ResourceMethods)
     {
-        var ddTraceType = Type.GetType("DatadogSdk.Maui.DdTrace, DatadogSdk.Maui");
-        if (ddTraceType is null)
-        {
-            return null;
-        }
-
-        const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Static;
-        var signature = new[] { typeof(string), typeof(Dictionary<string, object>), typeof(long) };
-        var startSpan = ddTraceType.GetMethod(
-                            "StartSpan",
-                            bindingFlags,
-                            binder: null,
-                            types: signature,
-                            modifiers: null);
-        var finishSpan = ddTraceType.GetMethod(
-                             "FinishSpan",
-                             bindingFlags,
-                             binder: null,
-                             types: signature,
-                             modifiers: null);
-
-        return startSpan is null || finishSpan is null
-               ? null
-               : new DatadogTraceMethods(startSpan, finishSpan);
+        public object? ResolveResourceMethod(string httpMethod) =>
+        ResourceMethods.TryGetValue(httpMethod, out var resourceMethod)
+        ? resourceMethod
+        : null;
     }
 
-    private static ulong ParseHexAsUInt64(string value) =>
-    ulong.TryParse(value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var parsed)
-    ? parsed
-    : 0;
-
-    private static ulong GenerateRandomUInt64NonZero()
-    {
-        Span<byte> bytes = stackalloc byte[8];
-        ulong value = 0;
-        while (value == 0)
-        {
-            RandomNumberGenerator.Fill(bytes);
-            value = BitConverter.ToUInt64(bytes);
-        }
-
-        return value;
-    }
-
-    private sealed record DatadogTraceMethods(MethodInfo StartSpan, MethodInfo FinishSpan);
+    private sealed record RumResourceContext(
+        string ResourceKey,
+        Dictionary<string, object> TraceAttributes);
 
     private sealed record TraceHeaderContext(
         ulong DatadogTraceId,
@@ -237,45 +345,41 @@ public sealed class DatadogTracingHandler : DelegatingHandler
         string TraceParent,
         string TraceState,
         string? DatadogTags,
-        Activity? Activity)
+        string? DatadogTraceIdHighBitsHex)
     {
         public static TraceHeaderContext Create()
         {
-            var activity = new Activity(OperationName);
-            activity.SetIdFormat(ActivityIdFormat.W3C);
-            activity.Start();
-
-            var traceIdHex = activity.TraceId.ToHexString().ToLowerInvariant();
-            var spanIdHex = activity.SpanId.ToHexString().ToLowerInvariant();
-            var datadogTraceId = ParseHexAsUInt64(traceIdHex[^16..]);
-            var datadogSpanId = ParseHexAsUInt64(spanIdHex);
-
-            if (datadogTraceId != 0 && datadogSpanId != 0)
+            while (true)
             {
-                return Build(activity, traceIdHex, spanIdHex, datadogTraceId, datadogSpanId, 1);
+                var traceIdHex = ActivityTraceId.CreateRandom().ToHexString().ToLowerInvariant();
+                var spanIdHex = ActivitySpanId.CreateRandom().ToHexString().ToLowerInvariant();
+                var datadogTraceId = ParseHexAsUInt64(traceIdHex[^16..]);
+                var datadogSpanId = ParseHexAsUInt64(spanIdHex);
+                if (datadogTraceId == 0 || datadogSpanId == 0)
+                {
+                    continue;
+                }
+
+                return Build(traceIdHex, spanIdHex, datadogTraceId, datadogSpanId, SamplingPriority);
+            }
+        }
+
+        public Dictionary<string, object> CreateRumTraceAttributes()
+        {
+            var attributes = new Dictionary<string, object>();
+            attributes[RumTraceIdAttribute] = DatadogTraceId.ToString(CultureInfo.InvariantCulture);
+            attributes[RumSpanIdAttribute] = DatadogSpanId.ToString(CultureInfo.InvariantCulture);
+            attributes[RumRulePsrAttribute] = 1.0d;
+
+            if (!string.IsNullOrWhiteSpace(DatadogTraceIdHighBitsHex))
+            {
+                attributes[RumTraceIdHighBitsAttribute] = DatadogTraceIdHighBitsHex;
             }
 
-            activity.Stop();
-            activity.Dispose();
-
-            // DdTrace.StartSpan does not expose trace/span identifiers, so fallback propagation IDs are generated locally.
-            var fallbackTraceId = GenerateRandomUInt64NonZero();
-            var fallbackSpanId = GenerateRandomUInt64NonZero();
-            var fallbackTraceIdHighBits = GenerateRandomUInt64NonZero();
-            var fallbackTraceIdHex = FormattableString.Invariant($"{fallbackTraceIdHighBits:x16}{fallbackTraceId:x16}");
-            var fallbackSpanIdHex = FormattableString.Invariant($"{fallbackSpanId:x16}");
-
-            return Build(
-                       activity: null,
-                       traceIdHex: fallbackTraceIdHex,
-                       spanIdHex: fallbackSpanIdHex,
-                       datadogTraceId: fallbackTraceId,
-                       datadogSpanId: fallbackSpanId,
-                       samplingPriority: 1);
+            return attributes;
         }
 
         private static TraceHeaderContext Build(
-            Activity? activity,
             string traceIdHex,
             string spanIdHex,
             ulong datadogTraceId,
@@ -298,7 +402,7 @@ public sealed class DatadogTracingHandler : DelegatingHandler
                        TraceParent: traceParent,
                        TraceState: traceState,
                        DatadogTags: datadogTags,
-                       Activity: activity);
+                       DatadogTraceIdHighBitsHex: highBits == "0000000000000000" ? null : highBits);
         }
     }
 }
