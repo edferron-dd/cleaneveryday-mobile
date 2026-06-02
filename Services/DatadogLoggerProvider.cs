@@ -57,11 +57,6 @@ public sealed class DatadogLoggerProvider : ILoggerProvider
                 formattedMessage = $"{formattedMessage}{Environment.NewLine}{exception}";
             }
 
-            if (DdSdk.Configuration is null)
-            {
-                return;
-            }
-
             try
             {
                 switch (logLevel)

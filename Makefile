@@ -17,7 +17,7 @@ build-ios:
 		-p:RuntimeIdentifier=iossimulator-arm64
 
 build-android:
-	dotnet build cleaneveryday-mobile.csproj \
+	dotnet build cleaneveryday-mobile.csproj -t:Run \
 		-f net10.0-android \
 		-c Debug \
 		-p:CodesignKey="" \
