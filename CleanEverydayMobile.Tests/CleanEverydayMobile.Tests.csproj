@@ -24,6 +24,7 @@
   <ItemGroup>
     <Compile Include="../Models/ApiModels.cs" Link="Models/ApiModels.cs" />
     <Compile Include="../Services/ApiService.cs" Link="Services/ApiService.cs" />
+    <Compile Include="../Services/DatadogTracingHandler.cs" Link="Services/DatadogTracingHandler.cs" />
     <Compile Include="../Services/SessionService.cs" Link="Services/SessionService.cs" />
   </ItemGroup>
 
