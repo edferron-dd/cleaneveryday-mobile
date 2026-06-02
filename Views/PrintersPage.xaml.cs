@@ -75,4 +75,9 @@ public partial class PrintersPage : ContentPage
         _logger.LogInformation("Cancel clicked on PrintersPage, navigating back");
         await Shell.Current.GoToAsync("..");
     }
+
+    private async void OnNewPrinterClicked(object sender, EventArgs e)
+    {
+        await _api.CreatePrinterAsync();
+    }
 }

@@ -53,8 +53,8 @@ public static class MauiProgram
                 ResourceTraceSampleRate = 100.0,
                 TrackFrustrations = true,
                 TrackBackgroundEvents = true,
-                TrackMemoryWarnings = true,
-                ResourceEventMapper = resource =>
+                TrackMemoryWarnings = true
+                /*ResourceEventMapper = resource =>
                 {
                     if (!Uri.TryCreate(resource.Url, UriKind.Absolute, out var resourceUri))
                     {
@@ -64,7 +64,7 @@ public static class MauiProgram
                     return string.Equals(resourceUri.Host, apiHost, StringComparison.OrdinalIgnoreCase)
                         ? null
                         : resource;
-                }
+                }*/
             })
             .UseDatadogSessionReplay(new SessionReplayConfiguration
             {
@@ -90,6 +90,7 @@ public static class MauiProgram
         builder.Services.AddTransient<HomePage>();
         builder.Services.AddTransient<ChecklistPage>();
         builder.Services.AddTransient<PrintersPage>();
+        builder.Services.AddTransient<TemperatureCheckerPage>();
 
         var app = builder.Build();
 

@@ -44,6 +44,14 @@
                     FontSize="18"
                     HeightRequest="56" />
 
+            <Button Text="🌡️ Temperature Checker"
+                    Clicked="OnTemperatureCheckerClicked"
+                    BackgroundColor="#512BD4"
+                    TextColor="White"
+                    CornerRadius="8"
+                    FontSize="18"
+                    HeightRequest="56" />
+
             <Button Text="Logout"
                     Clicked="OnLogoutClicked"
                     BackgroundColor="Transparent"

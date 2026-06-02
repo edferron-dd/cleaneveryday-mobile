@@ -189,4 +189,9 @@ public class ApiService
             throw;
         }
     }
+
+    public async Task CreatePrinterAsync()
+    {
+        await _http.PostAsJsonAsync("/api/v1/printer/", new { });
+    }
 }

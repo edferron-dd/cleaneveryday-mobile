@@ -39,7 +39,7 @@
             </CollectionView>
         </VerticalStackLayout>
 
-        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="12">
+        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="12">
             <Button Grid.Column="0"
                     Text="Cancel"
                     Clicked="OnCancelClicked"
@@ -56,6 +56,12 @@
                     TextColor="White"
                     CornerRadius="8"
                     IsEnabled="False" />
+            <Button Grid.Column="2"
+                    Text="New Printer"
+                    Clicked="OnNewPrinterClicked"
+                    BackgroundColor="#D32F2F"
+                    TextColor="White"
+                    CornerRadius="8" />
         </Grid>
 
     </Grid>

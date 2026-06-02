@@ -35,6 +35,12 @@ public partial class HomePage : ContentPage
         await Shell.Current.GoToAsync("PrintersPage");
     }
 
+    private async void OnTemperatureCheckerClicked(object sender, EventArgs e)
+    {
+        _logger.LogInformation("Navigating to TemperatureCheckerPage");
+        await Shell.Current.GoToAsync("TemperatureCheckerPage");
+    }
+
     private async void OnLogoutClicked(object sender, EventArgs e)
     {
         _logger.LogInformation("Logout tapped for userId: {UserId}", _session.UserId);

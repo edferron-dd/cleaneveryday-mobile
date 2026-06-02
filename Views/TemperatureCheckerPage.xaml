@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CleanEverydayMobile.Views.TemperatureCheckerPage"
+             Title="Temperature Checker">
+
+    <VerticalStackLayout Padding="40" Spacing="20" VerticalOptions="Center">
+
+        <Label Text="Enter a temperature to check:"
+               FontSize="18"
+               HorizontalOptions="Center" />
+
+        <Entry x:Name="TemperatureEntry"
+               Placeholder="Enter number"
+               Keyboard="Numeric"
+               HorizontalOptions="Fill" />
+
+        <Button Text="Check"
+                Clicked="OnCheckClicked"
+                BackgroundColor="#512BD4"
+                TextColor="White"
+                CornerRadius="8"
+                FontSize="18"
+                HeightRequest="56" />
+
+    </VerticalStackLayout>
+</ContentPage>
