@@ -46,6 +46,17 @@ jobs:
           dotnet workload install maui-ios \
             --from-rollback-file .github/workload-rollback-ios26.3.json
 
+      - name: Inject secrets
+        run: |
+          cat > AppSecrets.cs << 'EOF'
+          namespace CleanEverydayMobile;
+          internal static class AppSecrets
+          {
+              internal const string DatadogClientToken = "${{ secrets.DD_CLIENT_TOKEN }}";
+              internal const string DatadogRumApplicationId = "${{ secrets.DD_RUM_APP_ID }}";
+          }
+          EOF
+
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }} -p:TargetFramework=net10.0-ios -p:RuntimeIdentifier=iossimulator-x64
 

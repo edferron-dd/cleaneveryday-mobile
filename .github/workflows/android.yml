@@ -30,6 +30,17 @@ jobs:
       - name: Install MAUI workload
         run: dotnet workload install maui-android
 
+      - name: Inject secrets
+        run: |
+          cat > AppSecrets.cs << 'EOF'
+          namespace CleanEverydayMobile;
+          internal static class AppSecrets
+          {
+              internal const string DatadogClientToken = "${{ secrets.DD_CLIENT_TOKEN }}";
+              internal const string DatadogRumApplicationId = "${{ secrets.DD_RUM_APP_ID }}";
+          }
+          EOF
+
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }} -p:TargetFramework=net10.0-android
 

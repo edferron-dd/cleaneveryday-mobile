@@ -24,7 +24,7 @@ public static class MauiProgram
             .UseDatadogSdk(new DdSdkConfiguration
             {
 
-                ClientToken = "pub47b5608dcd99227e3b921bb39eab7af4",
+                ClientToken = AppSecrets.DatadogClientToken,
                 Service = "cleaneveryday-maui",
                 Environment = "demo",
                 Site = DatadogSite.Us1,
@@ -45,7 +45,7 @@ public static class MauiProgram
             .UseDatadogLogs(new DdLogsConfiguration { })
             .UseDatadogRum(new DdRumConfiguration
             {
-                ApplicationId = "08378444-1c4e-4555-988e-57143bd49100",
+                ApplicationId = AppSecrets.DatadogRumApplicationId,
                 SessionSampleRate = 100.0,
                 ResourceTraceSampleRate = 100.0,
                 TrackFrustrations = true,
