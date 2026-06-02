@@ -66,20 +66,20 @@ public sealed class DatadogLoggerProvider : ILoggerProvider
             {
                 switch (logLevel)
                 {
-                case LogLevel.Trace:
-                case LogLevel.Debug:
-                    DdLogs.Debug(formattedMessage);
-                    break;
-                case LogLevel.Information:
-                    DdLogs.Info(formattedMessage);
-                    break;
-                case LogLevel.Warning:
-                    DdLogs.Warn(formattedMessage);
-                    break;
-                case LogLevel.Error:
-                case LogLevel.Critical:
-                    DdLogs.Error(formattedMessage);
-                    break;
+                    case LogLevel.Trace:
+                    case LogLevel.Debug:
+                        DdLogs.Debug(formattedMessage);
+                        break;
+                    case LogLevel.Information:
+                        DdLogs.Info(formattedMessage);
+                        break;
+                    case LogLevel.Warning:
+                        DdLogs.Warn(formattedMessage);
+                        break;
+                    case LogLevel.Error:
+                    case LogLevel.Critical:
+                        DdLogs.Error(formattedMessage);
+                        break;
                 }
             }
             catch
