@@ -64,6 +64,7 @@ public static class MauiProgram
             });
 
         builder.Logging.AddDebug();
+        builder.Logging.AddProvider(new DatadogLoggerProvider());
 
         builder.Services.AddTransient(_ => new DatadogTracingHandler([apiHost]));
         builder.Services
