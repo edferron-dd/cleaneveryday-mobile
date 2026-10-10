@@ -32,16 +32,13 @@ public static class MauiProgram
                 NativeCrashReportEnabled = true,
                 FirstPartyHosts =
                 [
-                    new ()
+                    new FirstPartyHost
                     {
-                        Match = "dd-cleaneveryday-api.azurewebsites.net", HeaderTypes = new List<TracingHeaderType>
-                        {
-                            TracingHeaderType.Datadog, TracingHeaderType.TraceContext
-                        }
+                        Match = "dd-cleaneveryday-api.azurewebsites.net",
+                        HeaderTypes = [TracingHeaderType.Datadog]
                     }
                 ]
             })
-            .UseDatadogTrace()
             .UseDatadogLogs(new DdLogsConfiguration { })
             .UseDatadogRum(new DdRumConfiguration
             {
